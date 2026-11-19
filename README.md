@@ -203,6 +203,10 @@ Once per account, sign Claude Code in: switch the app to that account, then run 
 - `ANTHROPIC_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN` and the other credentials Claude Code ranks above `/login` win over the switched sign-in.
 - The Code tab inside the desktop app always uses the app's own account and needs none of this.
 
+## Usage on the taskbar
+
+Windows only. Under **Show on taskbar** in the menu, pick **Current account** or **All accounts** to see usage next to the notification area without opening the menu. Each account gets two nested rings, the outer one for the 5-hour limit and the inner one for the week, with both percentages to their right. The rings turn orange, then red, as they get close to the limit, like the tray icon. With all accounts shown, a small mark sits under the active one, and hovering an account shows its name and usage. The bar sits left of the notification area and of other apps docked there, such as TrafficMonitor, and hides with the taskbar for full-screen apps.
+
 ## How it works
 
 The switcher saves and restores the sign-in of each account, copies the chat list, projects and scheduled tasks between accounts, and reads usage from `api.anthropic.com`. It backs up Claude's files before every switch and leaves the rest of Claude's settings alone.

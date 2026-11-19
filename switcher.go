@@ -63,6 +63,9 @@ type State struct {
 	Language string `json:"language,omitempty"`
 	// CLIFollow moves Claude Code in the terminal along on every switch.
 	CLIFollow bool `json:"cliFollow,omitempty"`
+	// Taskbar shows usage on the Windows taskbar: "active" for the active
+	// account, "all" for every account, empty for none.
+	Taskbar string `json:"taskbar,omitempty"`
 }
 
 // switchCause says why a switch happened.
@@ -694,6 +697,14 @@ func (s *switcher) setModelLimit(on bool) {
 	s.onChange()
 }
 
+func (s *switcher) setTaskbar(mode string) {
+	s.mu.Lock()
+	s.st.Taskbar = mode
+	s.saveState()
+	s.mu.Unlock()
+	s.onChange()
+}
+
 func (s *switcher) setThreshold(t float64) {
 	s.mu.Lock()
 	s.st.Threshold = t
@@ -717,13 +728,14 @@ type snapshot struct {
 	Update    string
 	CLIFollow bool
 	CLINote   string
+	Taskbar   string
 }
 
 func (s *switcher) snapshot() snapshot {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	snap := snapshot{Active: s.active, AutoSwitch: s.st.AutoSwitch, SpendWeekly: s.st.SpendWeekly, ModelLimit: s.st.ModelLimit, Threshold: s.st.Threshold,
-		Status: s.status, Note: s.autoNote(time.Now()), Busy: s.busy.Load(), CLIFollow: s.st.CLIFollow, CLINote: s.cli.note}
+		Status: s.status, Note: s.autoNote(time.Now()), Busy: s.busy.Load(), CLIFollow: s.st.CLIFollow, CLINote: s.cli.note, Taskbar: s.st.Taskbar}
 	if !s.st.NoUpdateCheck && newerVersion(s.st.LatestVersion, version) {
 		snap.Update = s.st.LatestVersion
 	}

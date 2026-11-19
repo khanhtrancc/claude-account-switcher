@@ -30,6 +30,7 @@ type tray struct {
 	add        *systray.MenuItem
 	importNow  *systray.MenuItem
 	autostart  *systray.MenuItem
+	taskbar    []*systray.MenuItem
 	lastIcon   string
 	updates    chan struct{}
 }
@@ -79,6 +80,13 @@ func (t *tray) onReady() {
 			log.Printf("refresh start at login: %v", err)
 		}
 	}
+	if taskbarSupported {
+		show := systray.AddMenuItem(tr("Show on taskbar", "在任务栏显示"),
+			tr("Rings for the 5-hour and weekly limits with their percentages, next to the clock", "在时钟旁显示 5 小时和每周额度的圆环及百分比"))
+		for _, label := range taskbarLabels() {
+			t.taskbar = append(t.taskbar, show.AddSubMenuItemCheckbox(label, "", false))
+		}
+	}
 	t.autostart = systray.AddMenuItemCheckbox(tr("Start at login", "开机时启动"), "", autostartEnabled())
 	folder := systray.AddMenuItem(tr("Open data folder", "打开数据文件夹"), "")
 	quit := systray.AddMenuItem(tr("Quit", "退出"), "")
@@ -91,6 +99,13 @@ func (t *tray) onReady() {
 					go t.s.run(tr("Switch", "切换"), func() error { return t.s.switchTo(snap.Accounts[i].UUID, byHand) })
 				}
 				t.s.onChange()
+			}
+		}()
+	}
+	for i, item := range t.taskbar {
+		go func() {
+			for range item.ClickedCh {
+				t.s.setTaskbar(taskbarModes[i])
 			}
 		}()
 	}
@@ -240,6 +255,10 @@ func (t *tray) render() {
 	setChecked(t.spend, snap.SpendWeekly)
 	setChecked(t.model, snap.ModelLimit)
 	setChecked(t.cli, snap.CLIFollow)
+	for i, item := range t.taskbar {
+		setChecked(item, taskbarModes[i] == snap.Taskbar)
+	}
+	showTaskbar(barItems(snap, snap.Taskbar, now))
 	for i, item := range t.thresholds {
 		setChecked(item, thresholds[i] == snap.Threshold)
 	}
@@ -271,6 +290,13 @@ func customLabel(threshold float64) string {
 		return tr("Custom…", "自定义…")
 	}
 	return fmt.Sprintf(tr("Custom (%.0f%%)…", "自定义（%.0f%%）…"), threshold)
+}
+
+// taskbarModes are the choices of the Show on taskbar menu, in its order.
+var taskbarModes = []string{taskbarOff, taskbarActive, taskbarAll}
+
+func taskbarLabels() []string {
+	return []string{tr("Off", "关闭"), tr("Current account", "当前账号"), tr("All accounts", "所有账号")}
 }
 
 func appName() string { return tr("Claude Account Switcher", "Claude 账号切换器") }
